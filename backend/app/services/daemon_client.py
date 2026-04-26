@@ -15,7 +15,17 @@ async def _request(client: httpx.AsyncClient, method: str, path: str, **kwargs) 
         raise HTTPException(status_code=503, detail=f"daemon unreachable: {exc}") from exc
 
     if response.status_code >= 400:
-        raise HTTPException(status_code=response.status_code, detail=response.text)
+        # Daemon error bodies follow the Kanoop OperationResult shape:
+        # {"success": false, "message": "..."}. Older callers used {"error": "..."}.
+        # Prefer the structured message; fall back to raw text for opaque errors.
+        detail = response.text
+        try:
+            body = response.json()
+            if isinstance(body, dict):
+                detail = body.get("message") or body.get("error") or detail
+        except ValueError:
+            pass
+        raise HTTPException(status_code=response.status_code, detail=detail)
     return response.json()
 
 
