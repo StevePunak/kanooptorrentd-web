@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
@@ -63,3 +63,47 @@ class AddTorrentRequest(BaseModel):
 class AddTorrentResponse(BaseModel):
     info_hash: str
     display_name: str
+
+
+TorrentState = Literal[
+    "idle",
+    "fetching_metadata",
+    "checking",
+    "downloading",
+    "seeding",
+    "paused",
+    "error",
+    "unknown",
+]
+
+
+class TorrentInfo(BaseModel):
+    info_hash: str
+    name: str
+    state: TorrentState
+    progress: float
+    bytes_downloaded: int
+    total_size: int
+    download_rate: int
+    upload_rate: int
+    connected_peers: int
+    total_uploaded: int
+    ratio: float
+    eta_seconds: int
+    has_metadata: bool
+    download_directory: str
+
+
+class TorrentListResponse(BaseModel):
+    torrents: list[TorrentInfo]
+
+
+class SessionStats(BaseModel):
+    total_downloaded: int
+    total_uploaded: int
+    download_rate: int
+    upload_rate: int
+    total_peers: int
+    dht_nodes: int
+    active_torrents: int
+    paused_torrents: int

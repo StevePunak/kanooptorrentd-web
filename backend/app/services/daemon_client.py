@@ -51,3 +51,30 @@ async def search(client: httpx.AsyncClient, query: str) -> dict:
 
 async def add_torrent(client: httpx.AsyncClient, magnet: str) -> dict:
     return await _request(client, "POST", "/torrents", json={"magnet": magnet})
+
+
+async def list_torrents(client: httpx.AsyncClient) -> dict:
+    return await _request(client, "GET", "/torrents")
+
+
+async def get_torrent(client: httpx.AsyncClient, info_hash: str) -> dict:
+    return await _request(client, "GET", f"/torrents/{info_hash}")
+
+
+async def remove_torrent(client: httpx.AsyncClient, info_hash: str, delete_files: bool) -> dict:
+    return await _request(
+        client, "DELETE", f"/torrents/{info_hash}",
+        params={"delete_files": "true" if delete_files else "false"},
+    )
+
+
+async def pause_torrent(client: httpx.AsyncClient, info_hash: str) -> dict:
+    return await _request(client, "POST", f"/torrents/{info_hash}/pause")
+
+
+async def resume_torrent(client: httpx.AsyncClient, info_hash: str) -> dict:
+    return await _request(client, "POST", f"/torrents/{info_hash}/resume")
+
+
+async def session_stats(client: httpx.AsyncClient) -> dict:
+    return await _request(client, "GET", "/session/stats")

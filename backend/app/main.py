@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.routers import health, search, settings, torrents, version
+from app.routers import health, search, session, settings, torrents, version
 from app.services.daemon_client import make_client
 
 
@@ -42,6 +42,7 @@ app.include_router(version.router)
 app.include_router(settings.router)
 app.include_router(search.router)
 app.include_router(torrents.router)
+app.include_router(session.router)
 
 frontend_dist = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")
 if os.path.isdir(frontend_dist):
