@@ -1,0 +1,14 @@
+[Unit]
+Description=KanoopTorrentD Web Admin (FastAPI)
+After=network.target kanooptorrentd.service
+Wants=kanooptorrentd.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/kanooptorrentd-web/backend
+ExecStart=/opt/kanooptorrentd-web/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
