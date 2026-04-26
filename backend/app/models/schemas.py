@@ -36,3 +36,30 @@ class SettingsUpdateResult(BaseModel):
     applied: list[str]
     requires_restart: list[str]
     errors: list[str]
+
+
+class SearchResult(BaseModel):
+    name: str
+    info_hash: str
+    size: int
+    size_human: str
+    seeders: int
+    leechers: int
+    added_date: str
+    category: str
+    uploader_name: str
+    magnet: str
+
+
+class SearchResponse(BaseModel):
+    query: str
+    results: list[SearchResult]
+
+
+class AddTorrentRequest(BaseModel):
+    magnet: str
+
+
+class AddTorrentResponse(BaseModel):
+    info_hash: str
+    display_name: str

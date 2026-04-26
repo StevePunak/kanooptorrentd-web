@@ -33,3 +33,11 @@ async def get_settings(client: httpx.AsyncClient) -> dict:
 
 async def put_settings(client: httpx.AsyncClient, payload: dict) -> dict:
     return await _request(client, "PUT", "/admin/settings", json=payload)
+
+
+async def search(client: httpx.AsyncClient, query: str) -> dict:
+    return await _request(client, "GET", "/torrents/search", params={"q": query})
+
+
+async def add_torrent(client: httpx.AsyncClient, magnet: str) -> dict:
+    return await _request(client, "POST", "/torrents", json={"magnet": magnet})
