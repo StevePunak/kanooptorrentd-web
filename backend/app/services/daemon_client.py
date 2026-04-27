@@ -51,8 +51,11 @@ async def put_settings(client: httpx.AsyncClient, payload: dict) -> dict:
     return await _request(client, "PUT", "/admin/settings", json=payload)
 
 
-async def search(client: httpx.AsyncClient, query: str) -> dict:
-    return await _request(client, "GET", "/torrents/search", params={"q": query})
+async def search(client: httpx.AsyncClient, query: str, category: str | None = None) -> dict:
+    params: dict[str, str] = {"q": query}
+    if category:
+        params["cat"] = category
+    return await _request(client, "GET", "/torrents/search", params=params)
 
 
 async def add_torrent(client: httpx.AsyncClient, magnet: str) -> dict:

@@ -89,8 +89,11 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(payload),
     }),
-  search: (query: string) =>
-    request<SearchResponse>(`/search?q=${encodeURIComponent(query)}`),
+  search: (query: string, category?: string) => {
+    const params = new URLSearchParams({ q: query })
+    if (category && category !== 'any') params.set('cat', category)
+    return request<SearchResponse>(`/search?${params}`)
+  },
   addTorrent: (magnet: string) =>
     request<AddTorrentResponse>('/torrents', {
       method: 'POST',

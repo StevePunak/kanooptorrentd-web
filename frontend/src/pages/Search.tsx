@@ -48,14 +48,24 @@ function SearchRow({ row }: { row: SearchResultRow }) {
   )
 }
 
+const CATEGORIES = [
+  { value: 'any',          label: 'Any' },
+  { value: 'video',        label: 'Video' },
+  { value: 'audio',        label: 'Audio' },
+  { value: 'applications', label: 'Apps' },
+  { value: 'games',        label: 'Games' },
+  { value: 'other',        label: 'Other' },
+] as const
+
 export default function Search() {
   const [query, setQuery] = useState('')
+  const [category, setCategory] = useState<string>('any')
   const search = useSearchMutation()
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     const q = query.trim()
-    if (q) search.mutate(q)
+    if (q) search.mutate({ query: q, category })
   }
 
   const sorted = search.data?.results
@@ -75,6 +85,16 @@ export default function Search() {
           className="search__input"
           autoFocus
         />
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="search__category"
+          aria-label="Category"
+        >
+          {CATEGORIES.map((c) => (
+            <option key={c.value} value={c.value}>{c.label}</option>
+          ))}
+        </select>
         <button type="submit" disabled={search.isPending || query.trim() === ''}>
           {search.isPending ? 'Searching…' : 'Search'}
         </button>
