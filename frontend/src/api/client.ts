@@ -16,10 +16,18 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json()
 }
 
+export interface ProxySnapshot {
+  mode: string         // "direct" | "socks5_strict"
+  state: string        // "disabled" | "verifying" | "verified" | "failed"
+  exit_ip: string      // populated when verified
+  last_error: string   // populated when failed
+}
+
 export interface Health {
   status: string
   started_at: string
   uptime_seconds: number
+  proxy: ProxySnapshot
 }
 
 export interface Version {
@@ -35,12 +43,41 @@ export interface Settings {
   listen_port: number
   control_bind_address: string
   control_listen_port: number
+  proxy_mode: string         // "direct" | "socks5_strict"
+  proxy_host: string
+  proxy_port: number
+  proxy_username: string
+  proxy_password: string     // write-only — empty on GET
+  proxy_verify_url: string
 }
 
 export interface SettingsUpdateResult {
   applied: string[]
   requires_restart: string[]
   errors: string[]
+}
+
+export interface SearchResultRow {
+  name: string
+  info_hash: string
+  size: number
+  size_human: string
+  seeders: number
+  leechers: number
+  added_date: string
+  category: string
+  uploader_name: string
+  magnet: string
+}
+
+export interface SearchResponse {
+  query: string
+  results: SearchResultRow[]
+}
+
+export interface AddTorrentResponse {
+  info_hash: string
+  display_name: string
 }
 
 export const api = {
@@ -51,5 +88,12 @@ export const api = {
     request<SettingsUpdateResult>('/settings', {
       method: 'PUT',
       body: JSON.stringify(payload),
+    }),
+  search: (query: string) =>
+    request<SearchResponse>(`/search?q=${encodeURIComponent(query)}`),
+  addTorrent: (magnet: string) =>
+    request<AddTorrentResponse>('/torrents', {
+      method: 'POST',
+      body: JSON.stringify({ magnet }),
     }),
 }
