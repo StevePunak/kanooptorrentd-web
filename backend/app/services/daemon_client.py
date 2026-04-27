@@ -1,7 +1,11 @@
+import logging
+
 import httpx
 from fastapi import HTTPException
 
 from app.config import DAEMON_BASE_URL, DAEMON_TIMEOUT_SECONDS
+
+log = logging.getLogger(__name__)
 
 
 def make_client() -> httpx.AsyncClient:
@@ -12,6 +16,7 @@ async def _request(client: httpx.AsyncClient, method: str, path: str, **kwargs) 
     try:
         response = await client.request(method, path, **kwargs)
     except httpx.RequestError as exc:
+        log.warning("daemon unreachable on %s %s: %s", method, path, exc)
         raise HTTPException(status_code=503, detail=f"daemon unreachable: {exc}") from exc
 
     if response.status_code >= 400:
@@ -25,6 +30,7 @@ async def _request(client: httpx.AsyncClient, method: str, path: str, **kwargs) 
                 detail = body.get("message") or body.get("error") or detail
         except ValueError:
             pass
+        log.info("daemon %d on %s %s: %s", response.status_code, method, path, detail)
         raise HTTPException(status_code=response.status_code, detail=detail)
     return response.json()
 

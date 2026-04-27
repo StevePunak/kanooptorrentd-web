@@ -1,7 +1,11 @@
+import logging
+
 from fastapi import APIRouter, Request
 
 from app.models.schemas import LogLevelResponse, LogLevelUpdate, LogsResponse
 from app.services import daemon_client
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["logs"])
 
@@ -18,4 +22,5 @@ async def get_log_level(request: Request):
 
 @router.put("/api/log-level", response_model=LogLevelResponse)
 async def set_log_level(request: Request, payload: LogLevelUpdate):
+    log.info("log level change requested: %s", payload.level)
     return await daemon_client.set_log_level(request.app.state.daemon_client, payload.level)

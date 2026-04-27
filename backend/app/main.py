@@ -1,3 +1,4 @@
+import logging
 import os
 from contextlib import asynccontextmanager
 
@@ -5,8 +6,12 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.logging_config import configure_logging
 from app.routers import health, logs, search, session, settings, torrents, version
 from app.services.daemon_client import make_client
+
+configure_logging()
+log = logging.getLogger(__name__)
 
 
 class SpaStaticFiles(StaticFiles):
@@ -29,9 +34,11 @@ class SpaStaticFiles(StaticFiles):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.daemon_client = make_client()
+    log.info("FastAPI startup; daemon client targeting %s", app.state.daemon_client.base_url)
     try:
         yield
     finally:
+        log.info("FastAPI shutdown")
         await app.state.daemon_client.aclose()
 
 
