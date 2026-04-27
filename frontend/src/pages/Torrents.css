@@ -1,0 +1,125 @@
+.torrents__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+.torrents__stats > div {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+}
+.torrents__stats dt {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.torrents__stats dd {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.torrents__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+.torrents__table th,
+.torrents__table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: middle;
+}
+.torrents__table th {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  border-bottom-width: 2px;
+}
+
+.torrents__num,
+.torrents__num-head {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.torrents__name {
+  max-width: 28rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.torrents__state {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+.torrents__state--downloading { background: var(--color-primary); color: var(--color-primary-fg); }
+.torrents__state--seeding     { background: var(--color-success, #2a7a4a); color: white; }
+.torrents__state--paused      { background: var(--color-surface-3); }
+.torrents__state--error       { background: var(--color-danger); color: white; }
+
+.torrents__progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 12rem;
+}
+.torrents__bar {
+  flex: 1;
+  height: 6px;
+  background: var(--color-surface-2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.torrents__bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 200ms ease;
+}
+.torrents__pct {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  min-width: 3em;
+  text-align: right;
+}
+
+.torrents__action {
+  text-align: right;
+  white-space: nowrap;
+}
+.torrents__btn {
+  margin-top: 0;
+  margin-left: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-size: 0.9rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.torrents__btn--danger {
+  background: transparent;
+  color: var(--color-danger);
+  border: 1px solid var(--color-border);
+}
+.torrents__btn--danger:hover:not(:disabled) {
+  background: var(--color-danger);
+  color: white;
+}

@@ -1,5 +1,6 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
+import { torrentsQueryKey } from './useTorrents'
 
 export interface SearchInput {
   query: string
@@ -21,9 +22,15 @@ export function useSearchMutation() {
 
 /**
  * @returns A mutation that adds a torrent to the daemon by magnet URI.
+ *   Invalidates the torrents list on success so the new torrent shows up
+ *   on the Torrents page without waiting for the next poll.
  */
 export function useAddTorrentMutation() {
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (magnet: string) => api.addTorrent(magnet),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: torrentsQueryKey })
+    },
   })
 }

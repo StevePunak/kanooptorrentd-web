@@ -80,6 +80,53 @@ export interface AddTorrentResponse {
   display_name: string
 }
 
+export type TorrentState =
+  | 'idle'
+  | 'fetching_metadata'
+  | 'checking'
+  | 'downloading'
+  | 'seeding'
+  | 'paused'
+  | 'error'
+  | 'unknown'
+
+export interface TorrentInfo {
+  info_hash: string
+  name: string
+  state: TorrentState
+  progress: number
+  bytes_downloaded: number
+  total_size: number
+  download_rate: number
+  upload_rate: number
+  connected_peers: number
+  total_uploaded: number
+  ratio: number
+  eta_seconds: number
+  has_metadata: boolean
+  download_directory: string
+}
+
+export interface TorrentListResponse {
+  torrents: TorrentInfo[]
+}
+
+export interface SessionStatsResponse {
+  total_downloaded: number
+  total_uploaded: number
+  download_rate: number
+  upload_rate: number
+  total_peers: number
+  dht_nodes: number
+  active_torrents: number
+  paused_torrents: number
+}
+
+export interface OperationResult {
+  success: boolean
+  message: string
+}
+
 export const api = {
   health: () => request<Health>('/health'),
   version: () => request<Version>('/version'),
@@ -99,4 +146,17 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ magnet }),
     }),
+  listTorrents: () => request<TorrentListResponse>('/torrents'),
+  getTorrent: (infoHash: string) =>
+    request<TorrentInfo>(`/torrents/${infoHash}`),
+  removeTorrent: (infoHash: string, deleteFiles: boolean) =>
+    request<OperationResult>(
+      `/torrents/${infoHash}?delete_files=${deleteFiles}`,
+      { method: 'DELETE' },
+    ),
+  pauseTorrent: (infoHash: string) =>
+    request<OperationResult>(`/torrents/${infoHash}/pause`, { method: 'POST' }),
+  resumeTorrent: (infoHash: string) =>
+    request<OperationResult>(`/torrents/${infoHash}/resume`, { method: 'POST' }),
+  sessionStats: () => request<SessionStatsResponse>('/session/stats'),
 }
