@@ -78,3 +78,15 @@ async def resume_torrent(client: httpx.AsyncClient, info_hash: str) -> dict:
 
 async def session_stats(client: httpx.AsyncClient) -> dict:
     return await _request(client, "GET", "/session/stats")
+
+
+async def get_logs(client: httpx.AsyncClient, lines: int) -> dict:
+    return await _request(client, "GET", "/admin/logs", params={"lines": str(lines)})
+
+
+async def get_log_level(client: httpx.AsyncClient) -> dict:
+    return await _request(client, "GET", "/admin/log-level")
+
+
+async def set_log_level(client: httpx.AsyncClient, level: str) -> dict:
+    return await _request(client, "PUT", "/admin/log-level", json={"level": level})

@@ -107,3 +107,17 @@ class SessionStats(BaseModel):
     dht_nodes: int
     active_torrents: int
     paused_torrents: int
+
+
+class LogsResponse(BaseModel):
+    lines: list[str]
+    level: str
+    filename: str
+
+
+class LogLevelResponse(BaseModel):
+    level: str
+
+
+class LogLevelUpdate(BaseModel):
+    level: str
