@@ -77,10 +77,12 @@
 .torrents__state--error       { background: var(--color-danger); color: white; }
 
 .torrents__progress {
+  min-width: 12rem;
+}
+.torrents__progress-inner {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-width: 12rem;
 }
 .torrents__bar {
   flex: 1;

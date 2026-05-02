@@ -77,8 +77,10 @@ function TorrentRow({ t }: { t: TorrentInfo }) {
         </span>
       </td>
       <td className="torrents__progress">
-        <div className="torrents__bar"><div className="torrents__bar-fill" style={{ width: `${pct}%` }} /></div>
-        <span className="torrents__pct">{pct.toFixed(0)}%</span>
+        <div className="torrents__progress-inner">
+          <div className="torrents__bar"><div className="torrents__bar-fill" style={{ width: `${pct}%` }} /></div>
+          <span className="torrents__pct">{pct.toFixed(0)}%</span>
+        </div>
       </td>
       <td className="torrents__num">{formatRate(t.download_rate)}</td>
       <td className="torrents__num">{formatRate(t.upload_rate)}</td>
