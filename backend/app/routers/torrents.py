@@ -19,7 +19,7 @@ async def list_torrents(request: Request):
 @router.post("", response_model=AddTorrentResponse)
 async def add_torrent(request: Request, payload: AddTorrentRequest):
     return await daemon_client.add_torrent(
-        request.app.state.daemon_client, payload.magnet
+        request.app.state.daemon_client, payload.magnet, payload.category or ""
     )
 
 

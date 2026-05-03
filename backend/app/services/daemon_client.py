@@ -58,8 +58,11 @@ async def search(client: httpx.AsyncClient, query: str, category: str | None = N
     return await _request(client, "GET", "/torrents/search", params=params)
 
 
-async def add_torrent(client: httpx.AsyncClient, magnet: str) -> dict:
-    return await _request(client, "POST", "/torrents", json={"magnet": magnet})
+async def add_torrent(client: httpx.AsyncClient, magnet: str, category: str = "") -> dict:
+    body: dict[str, str] = {"magnet": magnet}
+    if category:
+        body["category"] = category
+    return await _request(client, "POST", "/torrents", json=body)
 
 
 async def list_torrents(client: httpx.AsyncClient) -> dict:
