@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { type TorrentInfo, type TorrentState } from '../api/client'
 import {
   usePauseTorrent,
@@ -138,7 +139,7 @@ export default function Torrents() {
 
       {!isLoading && torrents.length === 0 && (
         <p className="muted">
-          No torrents yet. <a href="/search">Search</a> for something to start a download.
+          No torrents yet. <Link to="/search">Search</Link> for something to start a download.
         </p>
       )}
 

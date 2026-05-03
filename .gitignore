@@ -9,3 +9,6 @@ frontend/.tsbuildinfo
 .qtcreator/
 .vscode/
 .idea/
+
+# Dune art reference cache — sourced for UI imagery, not part of the build
+art-candidates/

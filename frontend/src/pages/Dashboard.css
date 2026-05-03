@@ -1,0 +1,65 @@
+.dashboard__hero {
+  position: relative;
+  height: 220px;
+  margin-bottom: var(--space-5);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--space-5);
+
+  /* Layered: base gradient (always shown) + optional hero image. The image
+     sits on top with mix-blend so it tints into the spice palette; if it
+     404s, the gradient remains. The vignette sits above both for legibility. */
+  background-color: var(--color-surface);
+  background-image:
+    linear-gradient(180deg, rgba(14, 10, 6, 0.1) 0%, rgba(14, 10, 6, 0.85) 100%),
+    url('/images/dashboard-hero.jpg'),
+    linear-gradient(135deg, #2a1810 0%, #4a2a18 50%, #1a130c 100%);
+  background-size: cover, cover, cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.dashboard__hero-title {
+  margin: 0;
+  font-size: 2.2rem;
+  letter-spacing: 0.12em;
+  color: var(--color-primary-hi);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+}
+.dashboard__hero-tagline {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--color-text);
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  max-width: 60ch;
+}
+
+@media (max-width: 640px) {
+  .dashboard__hero { height: 160px; padding: var(--space-4); }
+  .dashboard__hero-title { font-size: 1.5rem; }
+  .dashboard__hero-tagline { font-size: 0.85rem; }
+}
+
+.dashboard__status {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.dashboard__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+.dashboard__grid .card { min-height: 160px; }
+
+@media (max-width: 640px) {
+  .dashboard__grid { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,44 @@
+.proxy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-2);
+  font-size: 0.8rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.proxy-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-text-dim);
+}
+
+.proxy-badge__label { color: var(--color-text); font-weight: 600; }
+.proxy-badge__detail {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.proxy-badge--disabled  .proxy-badge__dot { background: var(--color-text-dim); }
+.proxy-badge--verifying .proxy-badge__dot {
+  background: var(--color-warning);
+  animation: proxy-badge-pulse 1.2s ease-in-out infinite;
+}
+.proxy-badge--verified  .proxy-badge__dot { background: var(--color-success); box-shadow: 0 0 8px var(--color-success); }
+.proxy-badge--failed    .proxy-badge__dot { background: var(--color-danger);  box-shadow: 0 0 8px var(--color-danger); }
+
+.proxy-badge--failed { border-color: var(--color-danger); }
+
+@keyframes proxy-badge-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}

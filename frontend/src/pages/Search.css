@@ -53,6 +53,19 @@
 .search__num--seed { color: var(--color-success, var(--color-text)); }
 .search__num--leech { color: var(--color-text-muted); }
 
+.search__category-pick {
+  margin-right: var(--space-2);
+  padding: 4px 8px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.search__category-pick:disabled { cursor: not-allowed; opacity: 0.5; }
+
 .search__name {
   max-width: 32rem;
   overflow: hidden;

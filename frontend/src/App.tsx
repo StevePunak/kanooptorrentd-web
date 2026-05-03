@@ -1,51 +1,25 @@
-import { useEffect, useState } from 'react'
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
-import { api } from './api/client'
-import Health from './pages/Health'
+import { Route, Routes } from 'react-router-dom'
+import Layout from './components/layout/Layout'
+import About from './pages/About'
+import Dashboard from './pages/Dashboard'
+import Library from './pages/Library'
+import Search from './pages/Search'
+import Series from './pages/Series'
 import Settings from './pages/Settings'
-import Version from './pages/Version'
-
-function DaemonStatusBanner() {
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    const check = () => {
-      api.health()
-        .then(() => { if (!cancelled) setError(null) })
-        .catch(e => { if (!cancelled) setError(e.message) })
-    }
-    check()
-    const id = setInterval(check, 5000)
-    return () => { cancelled = true; clearInterval(id) }
-  }, [])
-
-  if (!error) return null
-  return (
-    <div className="daemon-down" role="alert">
-      <strong>Daemon unreachable</strong>
-      <span>{error}</span>
-    </div>
-  )
-}
+import Torrents from './pages/Torrents'
 
 export default function App() {
   return (
-    <div className="app">
-      <DaemonStatusBanner />
-      <nav>
-        <NavLink to="/health">Health</NavLink>
-        <NavLink to="/version">Version</NavLink>
-        <NavLink to="/settings">Settings</NavLink>
-      </nav>
-      <main>
-        <Routes>
-          <Route path="/" element={<Navigate to="/health" replace />} />
-          <Route path="/health" element={<Health />} />
-          <Route path="/version" element={<Version />} />
-          <Route path="/settings" element={<Settings />} />
-        </Routes>
-      </main>
-    </div>
+    <Layout>
+      <Routes>
+        <Route path="/"            element={<Dashboard />} />
+        <Route path="/torrents"    element={<Torrents />} />
+        <Route path="/search"      element={<Search />} />
+        <Route path="/library"     element={<Library />} />
+        <Route path="/series"      element={<Series />} />
+        <Route path="/settings/*"  element={<Settings />} />
+        <Route path="/about"       element={<About />} />
+      </Routes>
+    </Layout>
   )
 }

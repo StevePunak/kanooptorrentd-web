@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { type SearchResultRow } from '../api/client'
+import { type LibraryCategory, type SearchResultRow } from '../api/client'
 import { useAddTorrentMutation, useSearchMutation } from '../hooks/useSearch'
 import './Search.css'
 
@@ -10,8 +10,28 @@ function formatAdded(iso: string): string {
   return d.toLocaleDateString()
 }
 
+// Default the per-row library category from the apibay search category.
+// "video" is ambiguous between tv and movie — default to movie since most
+// single-release torrents are movies; user can override before clicking Add.
+function defaultCategoryFromSearch(searchCategory: string): LibraryCategory {
+  const c = searchCategory.toLowerCase()
+  if (c === 'audio') return 'music'
+  if (c === 'video') return 'movie'
+  return 'other'
+}
+
+const CATEGORY_LABELS: { value: LibraryCategory; label: string }[] = [
+  { value: 'tv',    label: 'TV' },
+  { value: 'movie', label: 'Movie' },
+  { value: 'music', label: 'Music' },
+  { value: 'other', label: 'Other' },
+]
+
 function SearchRow({ row }: { row: SearchResultRow }) {
   const add = useAddTorrentMutation()
+  const [category, setCategory] = useState<LibraryCategory>(
+    defaultCategoryFromSearch(row.category)
+  )
 
   let label = 'Add'
   let extraClass = ''
@@ -33,9 +53,20 @@ function SearchRow({ row }: { row: SearchResultRow }) {
       <td className="search__date">{formatAdded(row.added_date)}</td>
       <td className="search__uploader">{row.uploader_name || '—'}</td>
       <td className="search__action">
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value as LibraryCategory)}
+          disabled={add.isPending || add.isSuccess}
+          className="search__category-pick"
+          aria-label="Save under category"
+        >
+          {CATEGORY_LABELS.map((c) => (
+            <option key={c.value} value={c.value}>{c.label}</option>
+          ))}
+        </select>
         <button
           type="button"
-          onClick={() => add.mutate(row.magnet)}
+          onClick={() => add.mutate({ magnet: row.magnet, category })}
           disabled={add.isPending || add.isSuccess}
           className={`search__add${extraClass}`}
           title={add.isSuccess ? `info_hash: ${add.data?.info_hash}` : undefined}

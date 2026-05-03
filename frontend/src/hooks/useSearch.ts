@@ -1,6 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '../api/client'
+import { api, type LibraryCategory } from '../api/client'
 import { torrentsQueryKey } from './useTorrents'
+
+export interface AddTorrentInput {
+  magnet: string
+  category?: LibraryCategory
+}
 
 export interface SearchInput {
   query: string
@@ -28,7 +33,7 @@ export function useSearchMutation() {
 export function useAddTorrentMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (magnet: string) => api.addTorrent(magnet),
+    mutationFn: ({ magnet, category }: AddTorrentInput) => api.addTorrent(magnet, category),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: torrentsQueryKey })
     },

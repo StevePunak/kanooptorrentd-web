@@ -1,4 +1,7 @@
-const API_BASE = '/api'
+// BASE_URL is Vite's `base` config — '/apps/kanooptorrentd/' on the appliance,
+// '/' in dev. Trailing-slash + 'api' gives a URL the browser hits at the right
+// origin-relative path for both modes without hardcoding the install prefix here.
+const API_BASE = `${import.meta.env.BASE_URL}api`
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -23,11 +26,25 @@ export interface ProxySnapshot {
   last_error: string   // populated when failed
 }
 
+export interface LibraryPathRow {
+  path: string
+  category: string      // "tv" | "movie" | "music" | "other"
+  state: string         // "ready" | "missing" | "not_writable"
+  error: string
+}
+
+export interface LibrarySnapshot {
+  strict: boolean
+  state: string         // "ready" | "failed"
+  paths: LibraryPathRow[]
+}
+
 export interface Health {
   status: string
   started_at: string
   uptime_seconds: number
   proxy: ProxySnapshot
+  library?: LibrarySnapshot
 }
 
 export interface Version {
@@ -36,6 +53,8 @@ export interface Version {
   build_timestamp: string
   qt_version: string
 }
+
+export type LibraryCategory = 'tv' | 'movie' | 'music' | 'other'
 
 export interface Settings {
   download_dir: string
@@ -49,6 +68,13 @@ export interface Settings {
   proxy_username: string
   proxy_password: string     // write-only — empty on GET
   proxy_verify_url: string
+  // NAS library save paths — torrents added with a category route here.
+  tv_shows_path: string
+  movies_path: string
+  music_path: string
+  // When true, daemon refuses to bring up libtorrent unless every library
+  // path passes its mount check. Default off so unmounted defaults don't brick.
+  library_strict: boolean
 }
 
 export interface SettingsUpdateResult {
@@ -105,6 +131,7 @@ export interface TorrentInfo {
   eta_seconds: number
   has_metadata: boolean
   download_directory: string
+  category: LibraryCategory  // "other" when uncategorized
 }
 
 export interface TorrentListResponse {
@@ -141,10 +168,10 @@ export const api = {
     if (category && category !== 'any') params.set('cat', category)
     return request<SearchResponse>(`/search?${params}`)
   },
-  addTorrent: (magnet: string) =>
+  addTorrent: (magnet: string, category?: LibraryCategory) =>
     request<AddTorrentResponse>('/torrents', {
       method: 'POST',
-      body: JSON.stringify({ magnet }),
+      body: JSON.stringify(category ? { magnet, category } : { magnet }),
     }),
   listTorrents: () => request<TorrentListResponse>('/torrents'),
   getTorrent: (infoHash: string) =>
