@@ -96,6 +96,11 @@
   background: var(--color-primary);
   transition: width 200ms ease;
 }
+/* Color the bar by state so it carries the same signal the badge does.
+   On mobile we hide the badge entirely and rely on this. */
+.torrents__row--paused  .torrents__bar-fill { background: var(--color-text-muted); }
+.torrents__row--seeding .torrents__bar-fill { background: var(--color-success, #2a7a4a); }
+.torrents__row--error   .torrents__bar-fill { background: var(--color-danger); }
 .torrents__pct {
   font-family: var(--font-mono);
   font-size: 0.82rem;
@@ -124,4 +129,97 @@
 .torrents__btn--danger:hover:not(:disabled) {
   background: var(--color-danger);
   color: white;
+}
+
+.torrents__select,
+.torrents__select-head {
+  width: 1.6rem;
+  text-align: center;
+  vertical-align: middle;
+}
+.torrents__select input,
+.torrents__select-head input {
+  cursor: pointer;
+}
+
+.torrents__bulkbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+.torrents__bulkbar > span {
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+
+/* Mobile layout. Column order on this table is fixed (see Torrents.tsx):
+       1 select  2 name  3 state  4 progress
+       5 down    6 up    7 peers  8 ETA  9 size  10 action
+   On narrow viewports we keep: name (2), progress (4), down (5), action (10).
+   Everything else gets hidden:
+     - state (3): redundant — the progress bar is now state-colored.
+     - up/peers/ETA/size (6–9): low priority when monitoring remotely.
+     - select (1): bulk-select is an awkward mobile interaction.
+   We pin column widths with table-layout: fixed so the name column gets the
+   remainder, and let names wrap on word boundaries rather than mid-word. */
+@media (max-width: 640px) {
+  .torrents__table th:nth-child(1),
+  .torrents__table td:nth-child(1),
+  .torrents__table th:nth-child(3),
+  .torrents__table td:nth-child(3),
+  .torrents__table th:nth-child(6),
+  .torrents__table td:nth-child(6),
+  .torrents__table th:nth-child(7),
+  .torrents__table td:nth-child(7),
+  .torrents__table th:nth-child(8),
+  .torrents__table td:nth-child(8),
+  .torrents__table th:nth-child(9),
+  .torrents__table td:nth-child(9) {
+    display: none;
+  }
+  .torrents__table {
+    table-layout: fixed;
+    width: 100%;
+  }
+  .torrents__table th,
+  .torrents__table td {
+    padding: var(--space-2) var(--space-1);
+    font-size: 0.85rem;
+  }
+  /* Explicit widths for the kept columns. name (col 2) is left auto and
+     soaks up whatever space remains. */
+  .torrents__table th:nth-child(4),
+  .torrents__table td:nth-child(4) { width: 5rem; }
+  .torrents__table th:nth-child(5),
+  .torrents__table td:nth-child(5) { width: 4.5rem; }
+  .torrents__table th:nth-child(10),
+  .torrents__table td:nth-child(10) { width: 4rem; }
+  .torrents__name {
+    max-width: none;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+  .torrents__progress {
+    min-width: 0;
+  }
+  /* Percentage text is redundant with the bar on mobile — drop it for space. */
+  .torrents__pct { display: none; }
+  /* Tighter action buttons so both ▶/⏸ and ✕ fit in 4rem. */
+  .torrents__btn {
+    padding: 2px 4px;
+    font-size: 0.85rem;
+    margin-left: 2px;
+  }
 }

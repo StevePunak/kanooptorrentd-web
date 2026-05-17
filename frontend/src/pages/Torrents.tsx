@@ -1,12 +1,16 @@
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { type TorrentInfo, type TorrentState } from '../api/client'
 import {
+  useBulkRemoveTorrents,
   usePauseTorrent,
   useRemoveTorrent,
   useResumeTorrent,
   useSessionStats,
   useTorrents,
 } from '../hooks/useTorrents'
+import { useMovieIdentity } from '../hooks/useMovieIdentity'
+import { MoviePicker } from '../components/MoviePicker'
 import './Torrents.css'
 
 const STATE_LABELS: Record<TorrentState, string> = {
@@ -47,10 +51,26 @@ function formatEta(seconds: number): string {
   return `${s}s`
 }
 
-function TorrentRow({ t }: { t: TorrentInfo }) {
+function TorrentRow({
+  t,
+  selected,
+  onSelectChange,
+  bulkBusy,
+  onIdentify,
+}: {
+  t: TorrentInfo
+  selected: boolean
+  onSelectChange: (hash: string, checked: boolean) => void
+  bulkBusy: boolean
+  onIdentify: (t: TorrentInfo) => void
+}) {
   const pause = usePauseTorrent()
   const resume = useResumeTorrent()
   const remove = useRemoveTorrent()
+  // Only ask the daemon for movie identity on movie torrents; for everything
+  // else the query stays disabled (no network).
+  const isMovie = t.category === 'movie'
+  const identity = useMovieIdentity(t.info_hash, isMovie)
 
   const isPaused = t.state === 'paused'
   const pct = Math.max(0, Math.min(100, t.progress * 100))
@@ -61,16 +81,26 @@ function TorrentRow({ t }: { t: TorrentInfo }) {
   }
 
   const onRemove = () => {
-    const yes = window.confirm(`Remove "${t.name}"?\n\nClick OK to remove just the torrent, or Cancel to keep it.`)
-    if (!yes) return
-    const alsoFiles = window.confirm(`Also delete the downloaded files on disk?\n\nOK = delete files, Cancel = keep files.`)
-    remove.mutate({ infoHash: t.info_hash, deleteFiles: alsoFiles })
+    // Files-on-disk decision is server-side: NAS-rooted save paths preserve
+    // files (the curated library), local paths clean up. The user doesn't
+    // need to choose — single confirm.
+    if (!window.confirm(`Remove "${t.name}"?`)) return
+    remove.mutate(t.info_hash)
   }
 
-  const busy = pause.isPending || resume.isPending || remove.isPending
+  const busy = pause.isPending || resume.isPending || remove.isPending || bulkBusy
 
   return (
     <tr className={`torrents__row torrents__row--${t.state}`}>
+      <td className="torrents__select">
+        <input
+          type="checkbox"
+          aria-label={`Select ${t.name}`}
+          checked={selected}
+          disabled={bulkBusy}
+          onChange={e => onSelectChange(t.info_hash, e.target.checked)}
+        />
+      </td>
       <td className="torrents__name" title={t.name}>{t.name}</td>
       <td>
         <span className={`torrents__state torrents__state--${t.state}`}>
@@ -89,6 +119,19 @@ function TorrentRow({ t }: { t: TorrentInfo }) {
       <td className="torrents__num">{formatEta(t.eta_seconds)}</td>
       <td className="torrents__num">{formatBytes(t.total_size)}</td>
       <td className="torrents__action">
+        {isMovie && (
+          <button
+            type="button"
+            onClick={() => onIdentify(t)}
+            disabled={busy}
+            className="torrents__btn"
+            title={identity.data
+              ? `TMDB: ${identity.data.title}${identity.data.year > 0 ? ` (${identity.data.year})` : ''} — click to change`
+              : 'Movie has no TMDB identity yet — click to pick one. Completion stays paused until set.'}
+          >
+            {identity.data ? '✓' : '?'}
+          </button>
+        )}
         <button
           type="button"
           onClick={onToggle}
@@ -115,8 +158,53 @@ function TorrentRow({ t }: { t: TorrentInfo }) {
 export default function Torrents() {
   const { data: list, error, isLoading } = useTorrents()
   const { data: stats } = useSessionStats()
+  const bulk = useBulkRemoveTorrents()
 
   const torrents = list?.torrents ?? []
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  // The movie picker modal lives at the page level (not inside <tbody>) so
+  // its fixed-position backdrop doesn't violate HTML table nesting. Rows
+  // open it by handing up the torrent they want to identify.
+  const [identifyTarget, setIdentifyTarget] = useState<TorrentInfo | null>(null)
+
+  // Drop hashes from the selection that no longer exist (e.g. a single-row
+  // delete from another tab) so the count stays accurate.
+  const liveSelected = useMemo(() => {
+    if (selected.size === 0) return selected
+    const live = new Set(torrents.map(t => t.info_hash))
+    let changed = false
+    const next = new Set<string>()
+    for (const h of selected) {
+      if (live.has(h)) next.add(h)
+      else changed = true
+    }
+    return changed ? next : selected
+  }, [selected, torrents])
+
+  const allSelected = torrents.length > 0 && liveSelected.size === torrents.length
+  const someSelected = liveSelected.size > 0
+
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set())
+    else setSelected(new Set(torrents.map(t => t.info_hash)))
+  }
+
+  const toggleOne = (hash: string, checked: boolean) => {
+    setSelected(prev => {
+      const next = new Set(prev)
+      if (checked) next.add(hash)
+      else next.delete(hash)
+      return next
+    })
+  }
+
+  const onBulkDelete = () => {
+    const hashes = [...liveSelected]
+    if (hashes.length === 0) return
+    const word = hashes.length === 1 ? 'torrent' : 'torrents'
+    if (!window.confirm(`Remove ${hashes.length} ${word}?`)) return
+    bulk.mutate(hashes, { onSuccess: () => setSelected(new Set()) })
+  }
 
   return (
     <div className="torrents">
@@ -144,26 +232,74 @@ export default function Torrents() {
       )}
 
       {torrents.length > 0 && (
-        <table className="torrents__table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>State</th>
-              <th>Progress</th>
-              <th className="torrents__num-head">Down</th>
-              <th className="torrents__num-head">Up</th>
-              <th className="torrents__num-head">Peers</th>
-              <th className="torrents__num-head">ETA</th>
-              <th className="torrents__num-head">Size</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {torrents.map((t) => (
-              <TorrentRow key={t.info_hash} t={t} />
-            ))}
-          </tbody>
-        </table>
+        <>
+          {someSelected && (
+            <div className="torrents__bulkbar">
+              <span>{liveSelected.size} selected</span>
+              <button
+                type="button"
+                className="torrents__btn torrents__btn--danger"
+                onClick={onBulkDelete}
+                disabled={bulk.isPending}
+              >
+                {bulk.isPending ? 'Deleting…' : `Delete ${liveSelected.size}`}
+              </button>
+              <button
+                type="button"
+                className="torrents__btn"
+                onClick={() => setSelected(new Set())}
+                disabled={bulk.isPending}
+              >
+                Clear
+              </button>
+            </div>
+          )}
+          <table className="torrents__table">
+            <thead>
+              <tr>
+                <th className="torrents__select-head">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all torrents"
+                    checked={allSelected}
+                    ref={el => { if (el) el.indeterminate = someSelected && !allSelected }}
+                    onChange={toggleAll}
+                    disabled={bulk.isPending}
+                  />
+                </th>
+                <th>Name</th>
+                <th>State</th>
+                <th>Progress</th>
+                <th className="torrents__num-head">Down</th>
+                <th className="torrents__num-head">Up</th>
+                <th className="torrents__num-head">Peers</th>
+                <th className="torrents__num-head">ETA</th>
+                <th className="torrents__num-head">Size</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {torrents.map((t) => (
+                <TorrentRow
+                  key={t.info_hash}
+                  t={t}
+                  selected={liveSelected.has(t.info_hash)}
+                  onSelectChange={toggleOne}
+                  bulkBusy={bulk.isPending}
+                  onIdentify={setIdentifyTarget}
+                />
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+
+      {identifyTarget && (
+        <MoviePicker
+          infoHash={identifyTarget.info_hash}
+          fallbackTitle={identifyTarget.name}
+          onClose={() => setIdentifyTarget(null)}
+        />
       )}
     </div>
   )

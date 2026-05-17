@@ -3,13 +3,15 @@ import System from './System'
 import Torrent from './Torrent'
 import Proxy from './Proxy'
 import LibraryPaths from './LibraryPaths'
+import External from './External'
 import './Settings.css'
 
 const SUB_TABS = [
-  { to: '/settings/system',  label: 'System' },
-  { to: '/settings/torrent', label: 'Torrent' },
-  { to: '/settings/proxy',   label: 'Proxy' },
-  { to: '/settings/library', label: 'Library' },
+  { to: '/settings/system',   label: 'System' },
+  { to: '/settings/torrent',  label: 'Torrent' },
+  { to: '/settings/proxy',    label: 'Proxy' },
+  { to: '/settings/library',  label: 'Library' },
+  { to: '/settings/external', label: 'External' },
 ]
 
 export default function Settings() {
@@ -35,7 +37,8 @@ export default function Settings() {
           <Route path="system"  element={<System />} />
           <Route path="torrent" element={<Torrent />} />
           <Route path="proxy"   element={<Proxy />} />
-          <Route path="library" element={<LibraryPaths />} />
+          <Route path="library"  element={<LibraryPaths />} />
+          <Route path="external" element={<External />} />
         </Routes>
       </div>
     </div>

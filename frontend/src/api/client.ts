@@ -37,6 +37,165 @@ export interface LibrarySnapshot {
   strict: boolean
   state: string         // "ready" | "failed"
   paths: LibraryPathRow[]
+  last_scan_at: string  // ISO-8601, "" until first scan completes
+  file_counts: Record<string, number>  // category → count
+}
+
+export interface LibraryFile {
+  base_path: string
+  rel_path: string
+  category: string
+  size_bytes: number
+  mtime: string
+  last_seen_at: string
+}
+
+export interface LibraryFilesResponse {
+  files: LibraryFile[]
+}
+
+export interface LibraryShow {
+  title: string
+  episode_count: number
+}
+
+export interface LibraryShowsResponse {
+  shows: LibraryShow[]
+}
+
+export interface LibraryRecentShow {
+  title: string
+  new_episode_count: number
+  latest_mtime: string  // ISO-8601 UTC, "" if scanner hasn't recorded mtime yet
+}
+
+export interface LibraryRecentShowsResponse {
+  shows: LibraryRecentShow[]
+}
+
+export interface MonitoredSeries {
+  id: number
+  title: string
+  query: string
+  quality_filter: string  // comma-separated tokens; empty = no filter
+  max_size_mb: number     // 0 = no cap
+  skip_older_seasons: boolean  // reject candidates with season < max on-disk season
+  enabled: boolean
+  interval_minutes: number
+  last_checked_at: string  // ISO-8601, "" = never run
+  last_found_at: string    // ISO-8601, "" = never matched
+  created_at: string
+  // TMDB linkage — 0/"" when the series was added without picker metadata.
+  tmdb_id: number
+  imdb_id: string
+  first_air_year: number   // 4-digit; 0 = unknown
+  network: string          // display name (e.g. "Apple TV+", "HBO")
+  poster_path: string      // TMDB relative path (e.g. "/abc.jpg"); "" = no art
+}
+
+export interface MonitoredSeriesCreate {
+  title: string
+  query: string
+  quality_filter?: string
+  max_size_mb?: number
+  skip_older_seasons?: boolean
+  enabled?: boolean
+  interval_minutes?: number
+  // Optional TMDB linkage from the picker.
+  tmdb_id?: number
+  imdb_id?: string
+  first_air_year?: number
+  network?: string
+  poster_path?: string
+}
+
+// ─── TMDB metadata proxy (daemon → FastAPI → us) ────────────────────────────
+//
+// The FastAPI side mounts the daemon's /admin/tmdb/* under /api/metadata/* —
+// just a name change at the layer boundary, not a behavioural one. Responses
+// are TMDB's own JSON shapes (we don't re-key on the backend).
+
+export interface MetadataSearchResult {
+  id: number
+  name: string
+  original_name: string
+  first_air_date: string   // YYYY-MM-DD or ""; empty when TMDB hasn't dated it
+  overview: string
+  poster_path: string | null
+  origin_country: string[]
+}
+
+export interface MetadataSearchResponse {
+  page: number
+  results: MetadataSearchResult[]
+  total_pages: number
+  total_results: number
+}
+
+export interface MetadataShowExternalIds {
+  imdb_id: string | null
+  tvdb_id: number | null
+  // TMDB returns several others (facebook_id, twitter_id, etc.) but only
+  // imdb_id matters for the watcher; the rest are ignored.
+}
+
+export interface MetadataNetwork {
+  id: number
+  name: string
+  logo_path: string | null
+  origin_country: string
+}
+
+export interface MetadataShowDetails {
+  id: number
+  name: string
+  original_name: string
+  first_air_date: string
+  overview: string
+  poster_path: string | null
+  networks: MetadataNetwork[]
+  external_ids: MetadataShowExternalIds
+}
+
+export interface MetadataMovieSearchResult {
+  id: number
+  title: string
+  original_title: string
+  release_date: string     // YYYY-MM-DD or ""
+  overview: string
+  poster_path: string | null
+}
+
+export interface MetadataMovieSearchResponse {
+  page: number
+  results: MetadataMovieSearchResult[]
+  total_pages: number
+  total_results: number
+}
+
+export interface MetadataMovieDetails {
+  id: number
+  title: string
+  original_title: string
+  release_date: string
+  overview: string
+  poster_path: string | null
+  runtime: number | null
+  external_ids: MetadataShowExternalIds
+}
+
+/** Per-torrent TMDB movie identity. Returned by GET, accepted (tmdb_id only)
+ *  by PUT on /api/torrents/{hash}/movie-identity. */
+export interface MovieIdentity {
+  tmdb_id: number
+  imdb_id: string
+  title: string
+  year: number             // 0 when TMDB had no release_date
+  poster_path: string
+}
+
+export interface MonitoredSeriesListResponse {
+  series: MonitoredSeries[]
 }
 
 export interface Health {
@@ -60,6 +219,22 @@ export interface Settings {
   download_dir: string
   resume_dir: string
   listen_port: number
+  // Bytes/sec for the rate caps; 0 = unlimited.
+  // connections_limit is session-wide max peer connections; 0 = libtorrent default.
+  upload_rate_limit: number
+  download_rate_limit: number
+  connections_limit: number
+  // libtorrent queue caps; -1 = no cap
+  active_downloads: number
+  active_seeds: number
+  active_limit: number
+  // Protocol toggles. encryption_mode: "enabled" | "forced" | "disabled".
+  // PEX is intentionally not exposed — libtorrent doesn't expose it as a
+  // runtime settings_pack flag.
+  dht_enabled: boolean
+  lsd_enabled: boolean
+  utp_enabled: boolean
+  encryption_mode: string
   control_bind_address: string
   control_listen_port: number
   proxy_mode: string         // "direct" | "socks5_strict"
@@ -75,6 +250,10 @@ export interface Settings {
   // When true, daemon refuses to bring up libtorrent unless every library
   // path passes its mount check. Default off so unmounted defaults don't brick.
   library_strict: boolean
+  // TMDB integration credentials — write-only over the wire, never echoed on
+  // GET. Send empty string on PUT to clear; omit to leave unchanged.
+  tmdb_api_key: string
+  tmdb_access_token: string
 }
 
 export interface SettingsUpdateResult {
@@ -176,14 +355,58 @@ export const api = {
   listTorrents: () => request<TorrentListResponse>('/torrents'),
   getTorrent: (infoHash: string) =>
     request<TorrentInfo>(`/torrents/${infoHash}`),
-  removeTorrent: (infoHash: string, deleteFiles: boolean) =>
-    request<OperationResult>(
-      `/torrents/${infoHash}?delete_files=${deleteFiles}`,
-      { method: 'DELETE' },
-    ),
+  removeTorrent: (infoHash: string) =>
+    request<OperationResult>(`/torrents/${infoHash}`, { method: 'DELETE' }),
   pauseTorrent: (infoHash: string) =>
     request<OperationResult>(`/torrents/${infoHash}/pause`, { method: 'POST' }),
   resumeTorrent: (infoHash: string) =>
     request<OperationResult>(`/torrents/${infoHash}/resume`, { method: 'POST' }),
   sessionStats: () => request<SessionStatsResponse>('/session/stats'),
+  libraryFiles: (category?: LibraryCategory) => {
+    const path = category ? `/library/files?category=${category}` : '/library/files'
+    return request<LibraryFilesResponse>(path)
+  },
+  rescanLibrary: () =>
+    request<OperationResult>('/library/rescan', { method: 'POST' }),
+  libraryShows: () => request<LibraryShowsResponse>('/library/shows'),
+  libraryRecentShows: (days = 7, limit = 10) =>
+    request<LibraryRecentShowsResponse>(
+      `/library/shows/recent?days=${days}&limit=${limit}`,
+    ),
+  listSeries: () => request<MonitoredSeriesListResponse>('/series'),
+  createSeries: (payload: MonitoredSeriesCreate) =>
+    request<MonitoredSeries>('/series', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateSeries: (id: number, payload: Partial<MonitoredSeriesCreate>) =>
+    request<MonitoredSeries>(`/series/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deleteSeries: (id: number) =>
+    request<OperationResult>(`/series/${id}`, { method: 'DELETE' }),
+  runSeries: (id: number) =>
+    request<OperationResult>(`/series/${id}/run`, { method: 'POST' }),
+  // TMDB search + show-detail proxied through FastAPI (which proxies
+  // through the daemon's /admin/tmdb/*). Returns TMDB's native JSON shape.
+  metadataSearch: (q: string) =>
+    request<MetadataSearchResponse>(
+      `/metadata/search?q=${encodeURIComponent(q)}`,
+    ),
+  metadataShow: (tvId: number) =>
+    request<MetadataShowDetails>(`/metadata/show/${tvId}`),
+  metadataMovieSearch: (q: string) =>
+    request<MetadataMovieSearchResponse>(
+      `/metadata/search/movie?q=${encodeURIComponent(q)}`,
+    ),
+  metadataMovie: (movieId: number) =>
+    request<MetadataMovieDetails>(`/metadata/movie/${movieId}`),
+  getMovieIdentity: (infoHash: string) =>
+    request<MovieIdentity>(`/torrents/${infoHash}/movie-identity`),
+  setMovieIdentity: (infoHash: string, tmdbId: number) =>
+    request<MovieIdentity>(`/torrents/${infoHash}/movie-identity`, {
+      method: 'PUT',
+      body: JSON.stringify({ tmdb_id: tmdbId }),
+    }),
 }

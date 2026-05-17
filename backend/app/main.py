@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.logging_config import configure_logging
-from app.routers import health, logs, search, session, settings, torrents, version
+from app.routers import health, library, logs, metadata, search, series, session, settings, torrents, version
 from app.services.daemon_client import make_client
 
 configure_logging()
@@ -42,7 +42,18 @@ async def lifespan(app: FastAPI):
         await app.state.daemon_client.aclose()
 
 
-app = FastAPI(title="KanoopTorrentD Admin API", lifespan=lifespan)
+# root_path lets FastAPI know it's mounted behind a prefix-stripping reverse
+# proxy (gateway-admin's nginx serves us at /apps/kanooptorrentd/* and strips
+# that prefix before forwarding). Set WEB_ROOT_PATH=/apps/kanooptorrentd in
+# the stilgar service's environment so Swagger UI's openapi_url, redirects,
+# and any other absolute-URL generators emit prefixed paths the browser can
+# actually reach through nginx. In dev (no env), root_path="" — direct uvicorn
+# at localhost:8080 keeps working as-is.
+app = FastAPI(
+    title="KanoopTorrentD Admin API",
+    lifespan=lifespan,
+    root_path=os.environ.get("WEB_ROOT_PATH", ""),
+)
 
 app.include_router(health.router)
 app.include_router(version.router)
@@ -51,6 +62,9 @@ app.include_router(search.router)
 app.include_router(torrents.router)
 app.include_router(session.router)
 app.include_router(logs.router)
+app.include_router(library.router)
+app.include_router(series.router)
+app.include_router(metadata.router)
 
 frontend_dist = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")
 if os.path.isdir(frontend_dist):

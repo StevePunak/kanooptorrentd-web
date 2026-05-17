@@ -1,0 +1,336 @@
+.series {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.series__header h1 { margin: 0 0 var(--space-1); }
+.series__header p  { margin: 0; }
+
+.series-add {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+.series-add h3 {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+  color: var(--color-primary-hi);
+}
+
+.series-add__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.series-add__grid label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.series-add__grid span {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+.series-add__grid input {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.series-add__grid input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+/* Specificity dance: .series-add__grid label sets flex-column above. Match
+   that selector strength so the row-direction override actually wins. */
+.series-add__grid label.series-add__check {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+.series-add__check input[type="checkbox"] {
+  width: auto;        /* don't stretch like the text inputs */
+  margin: 0;
+}
+.series-add__check span {
+  font-size: 0.85rem;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-text);
+}
+
+/* ── Edit modal ─────────────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: var(--space-4);
+}
+.modal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  max-width: 720px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal .series-add {
+  /* The series-add styles already provide the grid + heading; just nest. */
+  border: none;
+  border-radius: 0;
+  padding: var(--space-5);
+}
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.modal__actions button[type="button"] {
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.series-add button {
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-primary);
+  color: var(--color-night);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 600;
+}
+.series-add button:hover:not(:disabled) { background: var(--color-primary-hi); }
+.series-add button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.series-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.series-table thead tr {
+  background: var(--color-surface-2);
+}
+.series-table th, .series-table td {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+.series-table th {
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+.series-table tbody tr:last-child td { border-bottom: none; }
+
+.series-row--disabled {
+  opacity: 0.5;
+}
+
+.series-row__quality {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 0 var(--space-2);
+  background: var(--color-surface-2);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  border-radius: var(--radius);
+  color: var(--color-text-muted);
+}
+
+.series-row__query {
+  font-family: var(--font-mono);
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+.series-row__interval { white-space: nowrap; }
+
+.series-row__when {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+}
+
+.series-row__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+.series-row__actions button {
+  font-family: inherit;
+  font-size: 0.8rem;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.series-row__actions button:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+.series-row__actions button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.series-row__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.series-row__delete:hover:not(:disabled) {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* ─── TMDB picker ────────────────────────────────────────────────────────── */
+/* The picker wraps the Title input in a relatively-positioned container so
+   the absolutely-positioned search dropdown anchors below it. */
+.tmdb-picker {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.tmdb-picker__chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+.tmdb-picker__chip-name {
+  font-weight: 600;
+  color: var(--color-text);
+}
+.tmdb-picker__chip-network,
+.tmdb-picker__chip-imdb {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  padding: 1px 6px;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+}
+.tmdb-picker__chip-clear {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-text-muted);
+  padding: 0 4px;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.tmdb-picker__chip-clear:hover {
+  color: var(--color-danger);
+  border-color: var(--color-border);
+}
+
+.tmdb-picker__dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  z-index: 20;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+.tmdb-picker__hint {
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+.tmdb-picker__hint--error {
+  color: var(--color-danger);
+}
+.tmdb-picker__results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tmdb-picker__result {
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--color-border);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tmdb-picker__result:first-child { border-top: none; }
+.tmdb-picker__result:hover {
+  background: var(--color-surface-2);
+}
+.tmdb-picker__result-name {
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+.tmdb-picker__result-year {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+.tmdb-picker__result-overview {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  line-height: 1.3;
+}
+
+@media (max-width: 720px) {
+  .series-add__grid { grid-template-columns: 1fr; }
+  .series-table thead { display: none; }
+  .series-table, .series-table tbody, .series-table tr, .series-table td { display: block; }
+  .series-table tr { padding: var(--space-3); border-bottom: 1px solid var(--color-border); }
+  .series-table td { padding: 0; border: none; }
+  .series-row__actions { flex-wrap: wrap; margin-top: var(--space-2); }
+}

@@ -53,6 +53,16 @@
   margin-bottom: var(--space-5);
 }
 
+.dashboard__status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+.dashboard__status-header h3 { margin: 0; }
+
 .dashboard__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -62,4 +72,67 @@
 
 @media (max-width: 640px) {
   .dashboard__grid { grid-template-columns: 1fr; }
+}
+
+/* Recent Shows card — per-show mini-cards in a responsive grid. A show whose
+   title matches a release-name pattern (Sxx.Eyy, 1080p, x265, etc.) gets a
+   stray accent so unsorted release-folders are visually obvious. */
+.recent-shows__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.recent-shows__header h3 { margin: 0; }
+.recent-shows__window {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.recent-shows__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.recent-show {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 76px;
+}
+.recent-show--stray {
+  border-color: var(--color-warning, #b8732e);
+  border-style: dashed;
+}
+
+.recent-show__title {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--color-text);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  flex: 1 1 auto;
+}
+
+.recent-show__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+}
+.recent-show__count {
+  color: var(--color-primary-hi);
+  font-weight: 600;
+}
+.recent-show__last {
+  color: var(--color-text-muted);
+  white-space: nowrap;
 }

@@ -44,8 +44,14 @@ export function useResumeTorrent() {
 }
 
 export function useRemoveTorrent() {
-  return useTorrentMutation(
-    ({ infoHash, deleteFiles }: { infoHash: string; deleteFiles: boolean }) =>
-      api.removeTorrent(infoHash, deleteFiles),
+  return useTorrentMutation((infoHash: string) => api.removeTorrent(infoHash))
+}
+
+/** Bulk delete — fires DELETE /torrents/{hash} per hash in parallel and
+ *  invalidates the list once at the end. The daemon decides per-torrent
+ *  whether files-on-disk go (NAS preserves, local cleans). */
+export function useBulkRemoveTorrents() {
+  return useTorrentMutation((infoHashes: string[]) =>
+    Promise.all(infoHashes.map(h => api.removeTorrent(h))),
   )
 }

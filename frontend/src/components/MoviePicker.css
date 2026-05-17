@@ -1,0 +1,76 @@
+.movie-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+  z-index: 1000;
+}
+
+.movie-picker {
+  width: min(720px, calc(100% - 2rem));
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.movie-picker__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+.movie-picker__header h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 1rem;
+  color: var(--color-primary-hi);
+}
+.movie-picker__close {
+  background: transparent;
+  border: 0;
+  color: var(--color-text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+}
+.movie-picker__close:hover { color: var(--color-text); }
+
+.movie-picker__current {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-2);
+  border-radius: var(--radius);
+}
+.movie-picker__current strong { color: var(--color-text); }
+.movie-picker__imdb {
+  margin-left: var(--space-2);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* Modal-mode override: inside a modal the dropdown is always visible
+   (no focus/blur gating), so let it sit as a flow element instead of a
+   floating overlay. */
+.movie-picker__dropdown {
+  position: static;
+  margin-top: var(--space-2);
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.movie-picker__status {
+  margin: var(--space-3) 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+.movie-picker__status--error { color: var(--color-danger, #e57373); }

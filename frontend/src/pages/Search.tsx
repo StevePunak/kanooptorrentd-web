@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { type LibraryCategory, type SearchResultRow } from '../api/client'
+import type { LibraryCategory, SearchResultRow } from '../api/client'
 import { useAddTorrentMutation, useSearchMutation } from '../hooks/useSearch'
 import './Search.css'
 
@@ -11,27 +11,23 @@ function formatAdded(iso: string): string {
 }
 
 // Default the per-row library category from the apibay search category.
-// "video" is ambiguous between tv and movie — default to movie since most
-// single-release torrents are movies; user can override before clicking Add.
+// apibay returns numeric top-level codes (100s=audio, 200s=video, 300s=apps,
+// 400s=games, 500s=adult, 600s=other). Inside the video bucket, TV-flavored
+// codes (205 TV, 208 HD-TV, 212 UHD-TV) split off from movies; everything
+// else in the video range defaults to movie. Operator can still override
+// per-row before clicking Add.
 function defaultCategoryFromSearch(searchCategory: string): LibraryCategory {
-  const c = searchCategory.toLowerCase()
-  if (c === 'audio') return 'music'
-  if (c === 'video') return 'movie'
+  const n = parseInt(searchCategory, 10)
+  if (!Number.isFinite(n)) return 'other'
+  if (n === 205 || n === 208 || n === 212) return 'tv'
+  if (n >= 200 && n < 300) return 'movie'
+  if (n >= 100 && n < 200) return 'music'
   return 'other'
 }
 
-const CATEGORY_LABELS: { value: LibraryCategory; label: string }[] = [
-  { value: 'tv',    label: 'TV' },
-  { value: 'movie', label: 'Movie' },
-  { value: 'music', label: 'Music' },
-  { value: 'other', label: 'Other' },
-]
-
 function SearchRow({ row }: { row: SearchResultRow }) {
   const add = useAddTorrentMutation()
-  const [category, setCategory] = useState<LibraryCategory>(
-    defaultCategoryFromSearch(row.category)
-  )
+  const category: LibraryCategory = defaultCategoryFromSearch(row.category)
 
   let label = 'Add'
   let extraClass = ''
@@ -53,17 +49,6 @@ function SearchRow({ row }: { row: SearchResultRow }) {
       <td className="search__date">{formatAdded(row.added_date)}</td>
       <td className="search__uploader">{row.uploader_name || '—'}</td>
       <td className="search__action">
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value as LibraryCategory)}
-          disabled={add.isPending || add.isSuccess}
-          className="search__category-pick"
-          aria-label="Save under category"
-        >
-          {CATEGORY_LABELS.map((c) => (
-            <option key={c.value} value={c.value}>{c.label}</option>
-          ))}
-        </select>
         <button
           type="button"
           onClick={() => add.mutate({ magnet: row.magnet, category })}

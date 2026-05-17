@@ -100,3 +100,37 @@
   white-space: normal;
   max-width: 24rem;
 }
+
+/* Mobile: drop low-priority columns and let the name wrap. Column order
+   on this table is fixed (see Search.tsx):
+       1 name  2 size  3 seeders  4 leechers
+       5 date  6 uploader  7 action
+   Keep: name, seeders, action.
+   Hide: size (2), leechers (4), date (5), uploader (6). */
+@media (max-width: 640px) {
+  .search__results th:nth-child(2),
+  .search__results td:nth-child(2),
+  .search__results th:nth-child(4),
+  .search__results td:nth-child(4),
+  .search__results th:nth-child(5),
+  .search__results td:nth-child(5),
+  .search__results th:nth-child(6),
+  .search__results td:nth-child(6) {
+    display: none;
+  }
+  .search__results th,
+  .search__results td {
+    padding: var(--space-2) var(--space-1);
+    font-size: 0.85rem;
+  }
+  .search__name {
+    max-width: none;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  /* Stack the search form (input + dropdown + button) on narrow viewports. */
+  .search__form {
+    flex-direction: column;
+  }
+}

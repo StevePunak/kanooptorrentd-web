@@ -20,7 +20,10 @@ _configured = False
 
 
 def _log_path() -> Path:
-    base = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")
+    # XDG_CACHE_HOME for the log file — regenerable text that doesn't belong
+    # in backups. Durable runtime data (if we ever add any here) goes under
+    # XDG_DATA_HOME, which the manifest now reserves for that purpose.
+    base = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
     return base / "kanooptorrentd-web" / "kanooptorrentd-web.log"
 
 
