@@ -174,6 +174,55 @@ async def set_movie_identity(client: httpx.AsyncClient, info_hash: str, tmdb_id:
     )
 
 
+async def mb_search(client: httpx.AsyncClient, artist: str, album: str, year: int = 0) -> dict:
+    params: dict[str, str] = {"album": album}
+    if artist:
+        params["artist"] = artist
+    if year > 0:
+        params["year"] = str(year)
+    return await _request(client, "GET", "/admin/mb/search", params=params)
+
+
+async def mb_album(client: httpx.AsyncClient, mbid: str) -> dict:
+    return await _request(client, "GET", f"/admin/mb/album/{mbid}")
+
+
+async def mb_guess(client: httpx.AsyncClient, info_hash: str) -> dict:
+    """Picker seed for a music torrent. Daemon scans embedded tags when
+    files are on disk, else parses the release name. Returns
+    {artist, album, year, mbid, source: "tags"|"name", confidence: ...}."""
+    return await _request(client, "GET", "/admin/mb/guess", params={"hash": info_hash})
+
+
+async def get_music_identity(client: httpx.AsyncClient, info_hash: str) -> dict:
+    return await _request(client, "GET", f"/torrents/{info_hash}/music-identity")
+
+
+async def set_music_identity(client: httpx.AsyncClient, info_hash: str, mbid: str) -> dict:
+    return await _request(
+        client, "PUT", f"/torrents/{info_hash}/music-identity",
+        json={"mbid": mbid},
+    )
+
+
+async def mb_cover(client: httpx.AsyncClient, mbid: str) -> bytes:
+    """Cover Art Archive bytes. Empty on daemon 404 (no front cover for the
+    release-group). Bypasses _request because that helper assumes JSON."""
+    try:
+        response = await client.request(
+            "GET", "/admin/mb/cover", params={"mbid": mbid}
+        )
+    except httpx.RequestError as exc:
+        log.warning("daemon unreachable on mb_cover: %s", exc)
+        raise HTTPException(status_code=503, detail=f"daemon unreachable: {exc}") from exc
+    if response.status_code == 404:
+        return b""
+    if response.status_code >= 400:
+        log.info("daemon %d on mb_cover: %s", response.status_code, response.text)
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+    return response.content
+
+
 async def tmdb_poster(client: httpx.AsyncClient, path: str, size: str) -> bytes:
     """Return JPEG bytes. Empty on daemon 404 (poster not found upstream).
     Bypasses _request because that helper assumes JSON responses."""

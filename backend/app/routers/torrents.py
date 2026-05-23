@@ -13,6 +13,10 @@ from app.services import daemon_client
 class MovieIdentityUpdate(BaseModel):
     tmdb_id: int
 
+
+class MusicIdentityUpdate(BaseModel):
+    mbid: str
+
 router = APIRouter(prefix="/api/torrents", tags=["torrents"])
 
 
@@ -75,4 +79,25 @@ async def set_movie_identity(
     imdb/poster from TMDB (cached) — the UI only sends tmdb_id."""
     return await daemon_client.set_movie_identity(
         request.app.state.daemon_client, info_hash, payload.tmdb_id,
+    )
+
+
+@router.get("/{info_hash}/music-identity")
+async def get_music_identity(request: Request, info_hash: str):
+    """Stored MusicBrainz identity for a music torrent. 404 (with the
+    daemon's OperationResult message) when none has been chosen yet."""
+    return await daemon_client.get_music_identity(
+        request.app.state.daemon_client, info_hash
+    )
+
+
+@router.put("/{info_hash}/music-identity")
+async def set_music_identity(
+    request: Request, info_hash: str, payload: MusicIdentityUpdate,
+):
+    """Bind a MusicBrainz release-group MBID to the torrent. Daemon
+    resolves artist/album/year/cover from MusicBrainz (cached) — the UI
+    only sends mbid."""
+    return await daemon_client.set_music_identity(
+        request.app.state.daemon_client, info_hash, payload.mbid,
     )

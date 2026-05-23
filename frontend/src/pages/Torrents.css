@@ -76,6 +76,21 @@
 .torrents__state--paused      { background: var(--color-surface-3); }
 .torrents__state--error       { background: var(--color-danger); color: white; }
 
+/* Inline "needs ID" chip beside the state label when a movie/music torrent
+ * is paused at 100% waiting for an identity binding. */
+.torrents__needs-id {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--color-warning, #d97706);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: help;
+}
+
 .torrents__progress {
   min-width: 12rem;
 }

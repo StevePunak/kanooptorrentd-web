@@ -10,7 +10,9 @@ import {
   useTorrents,
 } from '../hooks/useTorrents'
 import { useMovieIdentity } from '../hooks/useMovieIdentity'
+import { useMusicIdentity } from '../hooks/useMusicIdentity'
 import { MoviePicker } from '../components/MoviePicker'
+import { MusicPicker } from '../components/MusicPicker'
 import './Torrents.css'
 
 const STATE_LABELS: Record<TorrentState, string> = {
@@ -67,13 +69,22 @@ function TorrentRow({
   const pause = usePauseTorrent()
   const resume = useResumeTorrent()
   const remove = useRemoveTorrent()
-  // Only ask the daemon for movie identity on movie torrents; for everything
-  // else the query stays disabled (no network).
+  // Only ask the daemon for identity on the relevant category; for
+  // everything else the query stays disabled (no network).
   const isMovie = t.category === 'movie'
-  const identity = useMovieIdentity(t.info_hash, isMovie)
+  const isMusic = t.category === 'music'
+  const movieIdentity = useMovieIdentity(t.info_hash, isMovie)
+  const musicIdentity = useMusicIdentity(t.info_hash, isMusic)
 
   const isPaused = t.state === 'paused'
   const pct = Math.max(0, Math.min(100, t.progress * 100))
+  // "Needs identity" — paused at 100% on a movie/music torrent with no
+  // identity bound. This is the exact state that makes a torrent look
+  // mysteriously stuck. Surface it next to the state label so the
+  // operator doesn't have to hover the ? button to learn why.
+  const needsIdentity =
+    isPaused && t.progress >= 1 &&
+    ((isMovie && !movieIdentity.data) || (isMusic && !musicIdentity.data))
 
   const onToggle = () => {
     if (isPaused) resume.mutate(t.info_hash)
@@ -106,6 +117,14 @@ function TorrentRow({
         <span className={`torrents__state torrents__state--${t.state}`}>
           {STATE_LABELS[t.state]}
         </span>
+        {needsIdentity && (
+          <span
+            className="torrents__needs-id"
+            title="Download complete but no identity is bound. The torrent will stay paused until you pick one via the ? button."
+          >
+            needs ID
+          </span>
+        )}
       </td>
       <td className="torrents__progress">
         <div className="torrents__progress-inner">
@@ -119,17 +138,30 @@ function TorrentRow({
       <td className="torrents__num">{formatEta(t.eta_seconds)}</td>
       <td className="torrents__num">{formatBytes(t.total_size)}</td>
       <td className="torrents__action">
-        {isMovie && (
+        {isMovie && (movieIdentity.data || t.progress >= 1) && (
           <button
             type="button"
             onClick={() => onIdentify(t)}
             disabled={busy}
             className="torrents__btn"
-            title={identity.data
-              ? `TMDB: ${identity.data.title}${identity.data.year > 0 ? ` (${identity.data.year})` : ''} — click to change`
+            title={movieIdentity.data
+              ? `TMDB: ${movieIdentity.data.title}${movieIdentity.data.year > 0 ? ` (${movieIdentity.data.year})` : ''} — click to change`
               : 'Movie has no TMDB identity yet — click to pick one. Completion stays paused until set.'}
           >
-            {identity.data ? '✓' : '?'}
+            {movieIdentity.data ? '✓' : '?'}
+          </button>
+        )}
+        {isMusic && (musicIdentity.data || t.progress >= 1) && (
+          <button
+            type="button"
+            onClick={() => onIdentify(t)}
+            disabled={busy}
+            className="torrents__btn"
+            title={musicIdentity.data
+              ? `MB: ${musicIdentity.data.artist || 'Unknown'} — ${musicIdentity.data.album}${musicIdentity.data.year > 0 ? ` (${musicIdentity.data.year})` : ''} — click to change`
+              : 'Music has no MusicBrainz identity yet — click to pick one. Completion stays paused until set.'}
+          >
+            {musicIdentity.data ? '✓' : '?'}
           </button>
         )}
         <button
@@ -294,8 +326,15 @@ export default function Torrents() {
         </>
       )}
 
-      {identifyTarget && (
+      {identifyTarget?.category === 'movie' && (
         <MoviePicker
+          infoHash={identifyTarget.info_hash}
+          fallbackTitle={identifyTarget.name}
+          onClose={() => setIdentifyTarget(null)}
+        />
+      )}
+      {identifyTarget?.category === 'music' && (
+        <MusicPicker
           infoHash={identifyTarget.info_hash}
           fallbackTitle={identifyTarget.name}
           onClose={() => setIdentifyTarget(null)}

@@ -74,3 +74,28 @@
   color: var(--color-text-muted);
 }
 .movie-picker__status--error { color: var(--color-danger, #e57373); }
+
+/* Music picker — 3-field grid (artist/album/year). */
+.music-picker__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr 6rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.music-picker__fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+.music-picker__fields input {
+  font-size: 0.95rem;
+  padding: 0.4rem 0.5rem;
+}
+.music-picker__seed {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+  font-style: italic;
+}

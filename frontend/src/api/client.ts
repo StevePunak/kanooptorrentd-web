@@ -194,6 +194,52 @@ export interface MovieIdentity {
   poster_path: string
 }
 
+// ─── MusicBrainz album search + identity (daemon → FastAPI → us) ────────────
+
+export interface MetadataAlbumSearchResult {
+  id: string                          // MBID (UUID)
+  title: string                       // release-group title
+  'first-release-date'?: string       // "YYYY" or "YYYY-MM-DD" or absent
+  'primary-type'?: string             // "Album" / "EP" / "Single" / etc.
+  'artist-credit'?: Array<{
+    name: string
+    joinphrase?: string
+    artist?: { id: string; name: string }
+  }>
+}
+
+export interface MetadataAlbumSearchResponse {
+  count: number
+  offset: number
+  'release-groups': MetadataAlbumSearchResult[]
+}
+
+export interface MetadataAlbumDetails extends MetadataAlbumSearchResult {
+  releases?: Array<{ id: string; title: string; date?: string }>
+}
+
+/** Per-torrent MusicBrainz identity. mbid blank = synthetic (no MB match;
+ *  the auto-bind path fell back to the parsed release name). */
+export interface MusicIdentity {
+  mbid: string
+  artist: string
+  album: string
+  year: number             // 0 when MB had no first-release-date
+  cover_url: string
+}
+
+/** Picker seed from the daemon's /admin/mb/guess. When `source` is "tags"
+ *  the daemon scanned embedded ID3/Vorbis tags on disk; "name" means it
+ *  fell back to parsing the torrent name (files not present yet). */
+export interface MusicAlbumGuess {
+  source: 'tags' | 'name'
+  confidence: 'high' | 'medium' | 'low' | 'none'
+  artist: string
+  album: string
+  year: number
+  mbid: string
+}
+
 export interface MonitoredSeriesListResponse {
   series: MonitoredSeries[]
 }
@@ -408,5 +454,22 @@ export const api = {
     request<MovieIdentity>(`/torrents/${infoHash}/movie-identity`, {
       method: 'PUT',
       body: JSON.stringify({ tmdb_id: tmdbId }),
+    }),
+  metadataAlbumSearch: (artist: string, album: string, year: number) => {
+    const p = new URLSearchParams({ album })
+    if (artist) p.set('artist', artist)
+    if (year > 0) p.set('year', String(year))
+    return request<MetadataAlbumSearchResponse>(`/metadata/search/album?${p}`)
+  },
+  metadataAlbum: (mbid: string) =>
+    request<MetadataAlbumDetails>(`/metadata/album/${mbid}`),
+  metadataAlbumGuess: (infoHash: string) =>
+    request<MusicAlbumGuess>(`/metadata/album/guess/${infoHash}`),
+  getMusicIdentity: (infoHash: string) =>
+    request<MusicIdentity>(`/torrents/${infoHash}/music-identity`),
+  setMusicIdentity: (infoHash: string, mbid: string) =>
+    request<MusicIdentity>(`/torrents/${infoHash}/music-identity`, {
+      method: 'PUT',
+      body: JSON.stringify({ mbid }),
     }),
 }
