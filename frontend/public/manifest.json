@@ -1,0 +1,16 @@
+{
+  "name": "Kanoop Torrent",
+  "short_name": "Torrent",
+  "description": "Headless BitTorrent daemon admin UI",
+  "start_url": "/apps/kanooptorrentd/",
+  "scope": "/apps/kanooptorrentd/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0984e3",
+  "background_color": "#ffffff",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
