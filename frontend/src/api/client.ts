@@ -8,6 +8,16 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     headers: { 'Content-Type': 'application/json' },
     ...options,
   })
+  // Off-tailnet, an expired admin session makes nginx return a clean 401 on
+  // XHR/fetch (instead of redirecting to /login HTML, which would mangle
+  // JSON.parse). Hard-navigate to /login at the appliance root — that page
+  // lives in the gateway-admin SPA, outside our bundle's router. Throw so
+  // pending .json() never fires on the empty body.
+  if (res.status === 401) {
+    const next = encodeURIComponent(window.location.pathname + window.location.search)
+    window.location.href = `/login?next=${next}`
+    throw new Error('session expired')
+  }
   if (!res.ok) {
     let detail = `${res.status} ${res.statusText}`
     try {
