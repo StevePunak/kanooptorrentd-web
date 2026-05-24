@@ -137,10 +137,12 @@
   white-space: nowrap;
 }
 
-/* Recent Albums — cover-art tiles in a square-grid. Each tile is a 1:1
-   thumbnail with a bottom gradient scrim carrying artist/album text. Tiles
-   without an on-disk cover image render a placeholder glyph on a dark
-   gradient so the layout stays visually consistent. */
+/* Recent Albums — same card pattern as Recent Shows. Two-line title (artist
+   above, album+year below); meta row mirrors the shows' count + relative
+   mtime. Width-matched so the two sections grid in lockstep. */
+.recent-albums {
+  margin-top: var(--space-4);
+}
 .recent-albums__header {
   display: flex;
   align-items: baseline;
@@ -156,81 +158,63 @@
 
 .recent-albums__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: var(--space-3);
 }
 
 .recent-album {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  border-radius: var(--radius);
-  overflow: hidden;
+  background: var(--color-surface-2);
   border: 1px solid var(--color-border);
-  background-color: var(--color-surface-2);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-.recent-album--no-cover {
-  background-image: linear-gradient(135deg, #1a1410 0%, #2a1810 50%, #1a130c 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.recent-album__placeholder {
-  font-size: 4.5rem;
-  color: var(--color-primary-hi);
-  opacity: 0.25;
-  line-height: 1;
-}
-
-.recent-album__scrim {
-  position: absolute;
-  inset: 50% 0 0 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.85) 65%, rgba(0, 0, 0, 0.95) 100%);
+  border-radius: var(--radius);
+  padding: var(--space-3);
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding: var(--space-2);
-  color: #fff;
+  gap: var(--space-2);
+  min-height: 76px;
+}
+
+.recent-album__title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .recent-album__artist {
-  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
   font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: var(--color-text);
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 .recent-album__album {
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-top: 1px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 .recent-album__year {
-  color: rgba(255, 255, 255, 0.6);
-  font-weight: 400;
+  color: var(--color-text-muted);
 }
 
 .recent-album__meta {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   gap: var(--space-2);
+  font-size: 0.8rem;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-top: var(--space-1);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
-
-.recent-albums + section,
-.recent-albums {
-  margin-top: var(--space-4);
+.recent-album__count {
+  color: var(--color-primary-hi);
+  font-weight: 600;
+}
+.recent-album__last {
+  color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
 /* Recent-show card interactivity — clicking opens RecentEpisodesModal. */

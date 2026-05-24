@@ -4,7 +4,6 @@ import { useLibraryRecentAlbums, useLibraryRecentShows } from '../hooks/useLibra
 import { useVersion } from '../hooks/useVersion'
 import ProxyStateBadge from '../components/common/ProxyStateBadge'
 import RecentEpisodesModal from '../components/RecentEpisodesModal'
-import { albumCoverUrl } from '../api/client'
 import type { LibraryRecentAlbum, LibraryRecentShow } from '../api/client'
 import './Dashboard.css'
 
@@ -83,26 +82,21 @@ function RecentShowCard({
   )
 }
 
-function RecentAlbumTile({ album }: { album: LibraryRecentAlbum }) {
-  const cover = album.has_cover ? albumCoverUrl(album.rel_path) : ''
-  const titleAttr = album.year > 0 ? `${album.album} (${album.year})` : album.album
+function RecentAlbumCard({ album }: { album: LibraryRecentAlbum }) {
   return (
-    <div
-      className={`recent-album${album.has_cover ? '' : ' recent-album--no-cover'}`}
-      style={album.has_cover ? { backgroundImage: `url(${cover})` } : undefined}
-      title={titleAttr}
-    >
-      {!album.has_cover && <div className="recent-album__placeholder">♪</div>}
-      <div className="recent-album__scrim">
+    <div className="recent-album">
+      <div className="recent-album__title">
         <div className="recent-album__artist">{album.artist}</div>
         <div className="recent-album__album">
           {album.album}
           {album.year > 0 && <span className="recent-album__year"> ({album.year})</span>}
         </div>
-        <div className="recent-album__meta">
-          <span>{album.track_count} tracks</span>
-          {album.latest_mtime && <span>{formatRelative(album.latest_mtime)}</span>}
-        </div>
+      </div>
+      <div className="recent-album__meta">
+        <span className="recent-album__count">{album.track_count} tracks</span>
+        {album.latest_mtime && (
+          <span className="recent-album__last">{formatRelative(album.latest_mtime)}</span>
+        )}
       </div>
     </div>
   )
@@ -188,7 +182,7 @@ export default function Dashboard() {
         {recentAlbums.data && recentAlbums.data.albums.length > 0 && (
           <div className="recent-albums__grid">
             {recentAlbums.data.albums.map(a => (
-              <RecentAlbumTile key={a.rel_path} album={a} />
+              <RecentAlbumCard key={a.rel_path} album={a} />
             ))}
           </div>
         )}
