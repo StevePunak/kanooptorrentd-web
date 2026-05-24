@@ -1,6 +1,7 @@
+import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
-import type { LibraryCategory } from '../api/client'
+import type { LibraryCategory, LibraryFile } from '../api/client'
 import { healthQueryKey } from './useHealth'
 
 export const libraryFilesQueryKey = (category?: LibraryCategory) =>
@@ -57,4 +58,43 @@ export function useLibraryRecentShows(days = 7, limit = 10) {
     queryFn: () => api.libraryRecentShows(days, limit),
     staleTime: 60_000,
   })
+}
+
+export const libraryRecentAlbumsQueryKey = (days: number, limit: number) =>
+  ['library-recent-albums', days, limit] as const
+
+export function useLibraryRecentAlbums(days = 30, limit = 12) {
+  return useQuery({
+    queryKey: libraryRecentAlbumsQueryKey(days, limit),
+    queryFn: () => api.libraryRecentAlbums(days, limit),
+    staleTime: 60_000,
+  })
+}
+
+/**
+ * Per-show derived view over the cached `useLibraryFiles('tv')` query.
+ * Filters to TV files whose rel_path starts with `<title>/` and whose mtime
+ * is within the last `days`, sorted by mtime descending. Rides on the
+ * existing react-query cache — no additional fetch.
+ */
+export function useLibraryRecentEpisodes(title: string, days: number) {
+  const all = useLibraryFiles('tv')
+  const episodes = useMemo<LibraryFile[]>(() => {
+    if (!all.data) return []
+    const cutoff = Date.now() - days * 86_400_000
+    const prefix = `${title}/`
+    return all.data.files
+      .filter(f => f.rel_path.startsWith(prefix))
+      .filter(f => {
+        const t = new Date(f.mtime).getTime()
+        return Number.isFinite(t) && t >= cutoff
+      })
+      .sort((a, b) => b.mtime.localeCompare(a.mtime))
+  }, [all.data, title, days])
+
+  return {
+    isLoading: all.isLoading,
+    error: all.error,
+    episodes,
+  }
 }

@@ -73,6 +73,26 @@ export interface LibraryRecentShowsResponse {
   shows: LibraryRecentShow[]
 }
 
+export interface LibraryRecentAlbum {
+  artist: string
+  album: string
+  year: number          // 0 when folder name has no trailing "(YYYY)"
+  rel_path: string      // "<artist>/<folder>" — opaque; feed to albumCoverUrl()
+  track_count: number
+  latest_mtime: string  // ISO-8601 UTC
+  has_cover: boolean    // false → render placeholder tile, don't issue 404
+}
+
+export interface LibraryRecentAlbumsResponse {
+  albums: LibraryRecentAlbum[]
+}
+
+/** Build the album-cover URL for an <img src>. Browser fetches directly,
+ *  using whatever session cookies are already on the origin. */
+export function albumCoverUrl(relPath: string): string {
+  return `${API_BASE}/library/albums/cover?path=${encodeURIComponent(relPath)}`
+}
+
 export interface MonitoredSeries {
   id: number
   title: string
@@ -418,6 +438,10 @@ export const api = {
   libraryRecentShows: (days = 7, limit = 10) =>
     request<LibraryRecentShowsResponse>(
       `/library/shows/recent?days=${days}&limit=${limit}`,
+    ),
+  libraryRecentAlbums: (days = 30, limit = 12) =>
+    request<LibraryRecentAlbumsResponse>(
+      `/library/albums/recent?days=${days}&limit=${limit}`,
     ),
   listSeries: () => request<MonitoredSeriesListResponse>('/series'),
   createSeries: (payload: MonitoredSeriesCreate) =>

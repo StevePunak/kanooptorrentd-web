@@ -62,6 +62,20 @@ class LibraryRecentShowsResponse(BaseModel):
     shows: list[LibraryRecentShow] = []
 
 
+class LibraryRecentAlbum(BaseModel):
+    artist: str = ""
+    album: str = ""
+    year: int = 0
+    rel_path: str = ""        # "<artist>/<folder>" — opaque; pass back to /albums/cover
+    track_count: int = 0
+    latest_mtime: str = ""    # ISO-8601 UTC
+    has_cover: bool = False
+
+
+class LibraryRecentAlbumsResponse(BaseModel):
+    albums: list[LibraryRecentAlbum] = []
+
+
 class MonitoredSeries(BaseModel):
     id: int = 0
     title: str = ""

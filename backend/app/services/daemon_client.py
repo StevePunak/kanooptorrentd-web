@@ -123,6 +123,30 @@ async def get_library_recent_shows(client: httpx.AsyncClient, days: int, limit: 
     )
 
 
+async def get_library_recent_albums(client: httpx.AsyncClient, days: int, limit: int) -> dict:
+    return await _request(
+        client, "GET", "/admin/library/albums/recent",
+        params={"days": days, "limit": limit},
+    )
+
+
+async def get_library_album_cover(
+    client: httpx.AsyncClient, rel_path: str
+) -> tuple[bytes, str, int]:
+    # Binary endpoint — bypass _request (which assumes JSON). Pass through
+    # the upstream status code so the router can map 404s to FastAPI 404s
+    # without parsing the daemon's error body.
+    try:
+        response = await client.request(
+            "GET", "/admin/library/albums/cover", params={"path": rel_path},
+        )
+    except httpx.RequestError as exc:
+        log.warning("daemon unreachable on album-cover: %s", exc)
+        raise HTTPException(status_code=503, detail=f"daemon unreachable: {exc}") from exc
+    content_type = response.headers.get("content-type", "application/octet-stream")
+    return response.content, content_type, response.status_code
+
+
 async def list_series(client: httpx.AsyncClient) -> dict:
     return await _request(client, "GET", "/admin/series")
 

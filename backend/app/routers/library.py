@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import Response
 
 from app.models.schemas import (
     LibraryFilesResponse,
+    LibraryRecentAlbumsResponse,
     LibraryRecentShowsResponse,
     LibraryRescanResponse,
     LibraryShowsResponse,
@@ -40,3 +42,32 @@ async def get_library_recent_shows(
     return await daemon_client.get_library_recent_shows(
         request.app.state.daemon_client, days=days, limit=limit,
     )
+
+
+@router.get("/albums/recent", response_model=LibraryRecentAlbumsResponse)
+async def get_library_recent_albums(
+    request: Request,
+    days: int = Query(30, ge=1, le=365, description="Recency window in days"),
+    limit: int = Query(12, ge=1, le=100, description="Max number of albums to return"),
+):
+    return await daemon_client.get_library_recent_albums(
+        request.app.state.daemon_client, days=days, limit=limit,
+    )
+
+
+@router.get("/albums/cover")
+async def get_library_album_cover(
+    request: Request,
+    path: str = Query(..., description="Album rel_path returned by /albums/recent"),
+):
+    body, content_type, status = await daemon_client.get_library_album_cover(
+        request.app.state.daemon_client, rel_path=path,
+    )
+    if status == 404:
+        raise HTTPException(status_code=404, detail="cover not found")
+    if status >= 400:
+        raise HTTPException(status_code=status, detail="upstream cover error")
+    # Modest browser caching — covers don't change once an album is placed,
+    # but we don't want to fingerprint the URL since rel_path IS the identity.
+    return Response(content=body, media_type=content_type,
+                    headers={"Cache-Control": "public, max-age=3600"})
